@@ -4,7 +4,9 @@
 #include <vector>
 #include <string>
 
-
+/** Reads the data CSV and loads it into the order book
+ * Note the static classes, no state dependence
+*/
 class CSVReader
 {
     public:

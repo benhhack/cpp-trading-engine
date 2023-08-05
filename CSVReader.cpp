@@ -2,12 +2,13 @@
 #include <fstream>
 #include <iostream>
 
-
+/** Constructor*/
 CSVReader::CSVReader()
 {
 
 }
 
+/** Read CSV given a filename*/
 std::vector<OrderBookEntry> CSVReader::readCSV(std::string csvFilename)
 {
     std::vector<OrderBookEntry> entries;
@@ -21,13 +22,14 @@ std::vector<OrderBookEntry> CSVReader::readCSV(std::string csvFilename)
         {
             try
             {
+                // create an order book entry from the tokenised input string
                 OrderBookEntry obe = stringsToOBE(tokenise(line, ','));
                 entries.push_back(obe);
             }
                 catch(const std::exception& e){
                 std::cout << "CSVReader::readCSV Bad Data" <<std::endl;
             }
-        } //end of while
+        } 
     }
 
     std::cout << "CSVReader:: readCSV read "<< entries.size() << " entries" <<std::endl;
@@ -36,7 +38,9 @@ std::vector<OrderBookEntry> CSVReader::readCSV(std::string csvFilename)
     return entries;
 }
 
-
+/** Split a string based on a given separator.
+ *  Used quite frequently throughout the code.
+ */
 std::vector<std::string> CSVReader::tokenise(std::string csvLine, char separator)
 {
     // stores the tokens
@@ -46,16 +50,21 @@ std::vector<std::string> CSVReader::tokenise(std::string csvLine, char separator
     signed int start, end;
     std::string token;
 
+    // first char
     start = csvLine.find_first_not_of(separator, 0);
 
 
     do {
+        // goes to first separator
         end = csvLine.find_first_of(separator, start);
 
+        // checks that start and end can actually make a word/string
         if (start == csvLine.length() || start == end) break;
 
+        // get the substring between separator/start/end for a token
         if (end >= 0) token = csvLine.substr(start, end - start);
 
+        // if end has circled into negative
         else token = csvLine.substr(start, csvLine.length() - start);
 
         tokens.push_back(token);
@@ -72,7 +81,7 @@ std::vector<std::string> CSVReader::tokenise(std::string csvLine, char separator
     return tokens;
 }
 
-
+/**Converts a bunch of strings into an order book entry*/
 OrderBookEntry CSVReader::stringsToOBE(std::string priceString,
                                         std::string amountString,
                                         std::string timeStamp,
@@ -81,6 +90,7 @@ OrderBookEntry CSVReader::stringsToOBE(std::string priceString,
 {
 
     double price, amount;
+    // numbers into doubles conversion
     try {
         price = std::stod(priceString);
         amount = std::stod(amountString);
@@ -89,6 +99,7 @@ OrderBookEntry CSVReader::stringsToOBE(std::string priceString,
         std::cout << "CSVReader::stringsToOBE Bad float " << priceString<< ":"<<amountString << std::endl;
         throw;
     }
+    // create the order book entry
     OrderBookEntry obe{price, 
                         amount, 
                         timeStamp, 
@@ -98,7 +109,9 @@ OrderBookEntry CSVReader::stringsToOBE(std::string priceString,
     return obe;
 }
 
-
+/** Overloading the function.
+ * Takes a vector of string tokens.
+*/
 OrderBookEntry CSVReader::stringsToOBE(std::vector<std::string> tokens)
 {
 
