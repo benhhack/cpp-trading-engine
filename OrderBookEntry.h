@@ -2,10 +2,11 @@
 
 #include <string>
 
+/** The type of entries allowed.*/
 enum class OrderBookType{bid, ask, unknown, bidsale,asksale};
 
 
-
+/** Creates objects that go into the order book.*/
 class OrderBookEntry
 {
     public:
@@ -18,6 +19,7 @@ class OrderBookEntry
                         std::string username = "dataset");
         static OrderBookType strToOBT(std::string);
 
+        // comparators for the matching engine 
         static bool campareByTimestamp(const OrderBookEntry& e1, const OrderBookEntry& e2)
         {
             return e1.timeStamp < e2.timeStamp;

@@ -1,7 +1,7 @@
 #include "OrderBookEntry.h"
 
 
-
+/**Constructor*/
 OrderBookEntry::OrderBookEntry( double _price,
                                 double _amount,
                                 std::string _timeStamp,
@@ -18,7 +18,10 @@ OrderBookEntry::OrderBookEntry( double _price,
 
 }
 
-
+/**Converts a string to an order book type. 
+ * 
+ * Assumes proper input, unknowns are not dealt with.
+*/
 OrderBookType OrderBookEntry::strToOBT(std::string s)
 {
     if (s=="ask") return OrderBookType::ask; 
