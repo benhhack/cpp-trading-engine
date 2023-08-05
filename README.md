@@ -91,8 +91,7 @@ I found a great course on Coursera for an object-oriented programming specialisa
 
 ### Built With
 
-* [Dash][dash-url]
-* [KeyBERT](https://github.com/MaartenGr/KeyBERT#:~:text=KeyBERT%20is%20a%20minimal%20and,post%20can%20be%20found%20here)
+* C++
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -101,23 +100,24 @@ I found a great course on Coursera for an object-oriented programming specialisa
 <!-- GETTING STARTED -->
 ## Getting Started
 
-Just install and run the project. Note that it is still very early stages and so it is very basic. WIll slowly improve and maintain alongside my job search.
+After installing, compile the project 
+```sh
+g++ --std=c++11 *.cpp -o <name-of-executable>
+```
 
 ### Prerequisites
 
-* Python: see [this article](https://realpython.com/installing-python/) on Python installation
-* Firefox/Google Chrome for testing (default is Firefox)
+* C++ (and probably an IDE to work in)
+* a compiler for C++
 
 ### Installation
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/benhhack/basic-keyword-extractor-app
+   git clone https://github.com/benhhack/cpp-trading-engine
    ```
-2. Run the shell files
-   ```sh
-   ./runApp.sh
-   ```
+2. Make sure you have a C++ compiler installed.
+   
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
