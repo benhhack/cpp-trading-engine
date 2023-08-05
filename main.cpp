@@ -7,20 +7,12 @@
 #include "Wallet.h"
 
 
-
+/** Welcome to the simulation!
+ * 
+ * The main function constructs and initialises the app.
+*/
 int main (){
-
+    
     CryptoExMain app{};
     app.init();
-    
-    // Wallet wallet;
-    // wallet.insertCurrency("BTC", 10);
-    // wallet.insertCurrency("USDT", 10000);
-    // std::cout << wallet.toString() << std::endl;
-
-    // wallet.removeCurrency("BTC", 2)
-
-
-
-    // std::cout << wallet.toString() << std::endl;
 }
