@@ -10,7 +10,7 @@ OrderBook::OrderBook(std::string fileName)
     orders = CSVReader::readCSV(fileName);
 }
 
-/** Vector of all know products in dataset*/
+/** Gets all known products in dataset*/
 std::vector<std::string> OrderBook::getKnownProducts()
 {
     std::vector<std::string> products;
@@ -31,7 +31,7 @@ std::vector<std::string> OrderBook::getKnownProducts()
     return products;
 }
 
-/** return vector of orders according to sent filters*/
+/** Gets all orders according to sent filters*/
 std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type,
                                         std::string product,
                                         std::string timestamp)
@@ -51,6 +51,7 @@ std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type,
     return orders_sub;
 }
 
+/** Returns the highest price of a vector of orders.*/
 double OrderBook::getHighPrice(std::vector<OrderBookEntry>& orders)
 {
     double max = orders[0].price;
@@ -60,6 +61,7 @@ double OrderBook::getHighPrice(std::vector<OrderBookEntry>& orders)
     return max;
 }
 
+/** Returns the lowest price of a vector of orders.*/
 double OrderBook::getLowPrice(std::vector<OrderBookEntry>& orders)
 {
     double min = orders[0].price;
@@ -69,13 +71,16 @@ double OrderBook::getLowPrice(std::vector<OrderBookEntry>& orders)
     return min;
 }
 
-
+/** Returns the earliest time in the order book*/
 std::string OrderBook::getEarliestTime()
 {
     // assuming orders are sorted
     return orders[0].timeStamp;
 }
 
+/** Returns the next time after the sent time 
+* If there is no next it wraps around to the start.
+*/
 std::string OrderBook::getNextTime(std::string timeStamp)
 {
     std::string next_timeStamp = "";
@@ -89,81 +94,93 @@ std::string OrderBook::getNextTime(std::string timeStamp)
         }
     }
 
+    // wrapping to start
     if (next_timeStamp == "") next_timeStamp = orders[0].timeStamp;
 
     return next_timeStamp;
 }
 
+/**Inserting an order into the book*/
 void OrderBook::insertOrder(OrderBookEntry& order)
 {
     orders.push_back(order);
 
+    // sorts the orders by timestamp
     std::sort(orders.begin(), orders.end(), OrderBookEntry::campareByTimestamp);
 }
 
+/** Matching algorithm (price-time priority with pro rata based partial order completion)*/
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string timestamp)
 {
-  std::vector<OrderBookEntry> asks = getOrders(OrderBookType::ask,
-                                               product,
-                                               timestamp);
-  std::vector<OrderBookEntry> bids = getOrders(OrderBookType::bid,
-                                               product,
-                                               timestamp);
+    // get all the asks and bids
+    std::vector<OrderBookEntry> asks = getOrders(OrderBookType::ask,
+                                                product,
+                                                timestamp);
+    std::vector<OrderBookEntry> bids = getOrders(OrderBookType::bid,
+                                                product,
+                                                timestamp);
 
-  std::vector<OrderBookEntry> sales;
+    std::vector<OrderBookEntry> sales;
+    
+    // sort asks in ascending order and bids in decending order (price priority)
+    std::sort(asks.begin(), asks.end(), OrderBookEntry::compareByPriceAsc);
 
-  std::sort(asks.begin(), asks.end(), OrderBookEntry::compareByPriceAsc);
+    std::sort(bids.begin(), bids.end(), OrderBookEntry::compareByPriceDesc);
 
-  std::sort(bids.begin(), bids.end(), OrderBookEntry::compareByPriceDesc);
-
-  for (OrderBookEntry &ask : asks)
-  {
+    // iterate through all bids and asks
+    for (OrderBookEntry &ask : asks)
+    {
     for (OrderBookEntry &bid : bids)
     {
-      if (bid.price >= ask.price)
-      {
-        OrderBookEntry sale{ask.price, 0, timestamp, product, OrderBookType::asksale};
+        // order can be placed 
+        if (bid.price >= ask.price)
+        {   
+            // create a new sale
+            OrderBookEntry sale{ask.price, 0, timestamp, product, OrderBookType::asksale};
 
-        if (bid.username == "simuser")
-        {
-          sale.username = "simuser";
-          sale.orderType = OrderBookType::bidsale;
+            // update the order type for our simulated user 
+            if (bid.username == "simuser")
+            {
+                sale.username = "simuser";
+                sale.orderType = OrderBookType::bidsale;
+            }
+            if (ask.username == "simuser")
+            {
+                sale.username = "simuser";
+                sale.orderType = OrderBookType::asksale;
+            };
+
+            // if the bid and ask amounts are the same, transfer all over to bidder
+            if (bid.amount == ask.amount)
+
+            {
+                sale.amount = ask.amount;
+                sales.push_back(sale);
+                bid.amount = 0;
+                break;
+            }
+
+            // if the bid amount > ask amount, only take the amount that was offered
+            if (bid.amount > ask.amount)
+            {
+                sale.amount = ask.amount;
+                sales.push_back(sale);
+                bid.amount = bid.amount - ask.amount;
+                break;
+            }
+
+            // give the highest bidder the amount they asked for, leave the rest in the ask
+            if (bid.amount < ask.amount &&
+                bid.amount > 0)
+            {
+                sale.amount = bid.amount;
+                sales.push_back(sale);
+                ask.amount = ask.amount - bid.amount;
+                bid.amount = 0;
+                continue;
+            }
         }
-        if (ask.username == "simuser")
-        {
-          sale.username = "simuser";
-          sale.orderType = OrderBookType::asksale;
-          ;
-        };
-
-        if (bid.amount == ask.amount)
-
-        {
-          sale.amount = ask.amount;
-          sales.push_back(sale);
-          bid.amount = 0;
-          break;
-        }
-
-        if (bid.amount > ask.amount)
-        {
-          sale.amount = ask.amount;
-          sales.push_back(sale);
-          bid.amount = bid.amount - ask.amount;
-          break;
-        }
-
-        if (bid.amount < ask.amount &&
-            bid.amount > 0)
-        {
-          sale.amount = bid.amount;
-          sales.push_back(sale);
-          ask.amount = ask.amount - bid.amount;
-          bid.amount = 0;
-          continue;
-        }
-      }
     }
-  }
-  return sales;
+    }
+    return sales;
 }
