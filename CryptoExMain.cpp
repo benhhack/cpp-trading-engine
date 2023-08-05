@@ -5,26 +5,32 @@
 #include "CSVReader.h"
 
 
-
+/** Constructor */
 CryptoExMain::CryptoExMain()
 {
 
 }
 
+/** App initalisaion */
 void CryptoExMain::init()
 {
     int input;
+    // starts the app at the earliest time
     currentTime = orderBook.getEarliestTime();
 
+    // gives the user some currency to play around with
     wallet.insertCurrency("BTC", 10);
-
-    while(true) {
+    
+    // cycles until a user quits
+    bool run = true;
+    while(run) {
         printMenu();
         input = getUserOption();
-        processUserOption(input);
+        run = processUserOption(input);
     }
 };
 
+/** Prints a menu for the user */
 void CryptoExMain::printMenu()
 {
     std::cout << "1: Print help" << std::endl;
@@ -32,24 +38,28 @@ void CryptoExMain::printMenu()
     std::cout << "3: Make an offer" << std::endl;
     std::cout << "4: Make a bid" << std::endl;
     std::cout << "5: Print wallet" << std::endl;
-    // add a time step
     std::cout << "6: Continue" << std::endl;
-
     std::cout << "7: Exit" << std::endl;
-
     std::cout << "====================" << std::endl;    
 
+    // let's let a user know what the time is
     std::cout << "Current time is " <<  currentTime << std::endl;   
 }
 
+/** Tells user the point of the app */
 void CryptoExMain::printHelp(){
     std::cout << "Help - your aim is to make money. Analyze the market and make bids and offers." << std::endl;
 }
 
+/** Shows user the max and min ask for each price pair.
+ * Also shows how many asks have been seen.
+*/
 void CryptoExMain::printMarketStats(){
 
+    // iterate through products in order book
     for (std::string const& p : orderBook.getKnownProducts())
     {
+        // print the stats for each order
         std::cout << "Product: " << p << std::endl;
         std::vector<OrderBookEntry> entries = orderBook.getOrders(OrderBookType::ask, 
                                                                 p, currentTime);
@@ -59,42 +69,36 @@ void CryptoExMain::printMarketStats(){
         std::cout << "Min ask : " << OrderBook::getLowPrice(entries) << std::endl;
 
     }
-    // std::cout << "OrderBook contains " << orders.size() << " entries" <<std::endl;
-
-    // unsigned int bids = 0; 
-    // unsigned int asks = 0; 
-
-    // for (OrderBookEntry& e : orders) {
-    //     if (e.orderType == OrderBookType::ask) asks++;
-    //     if (e.orderType == OrderBookType::bid) bids++;
-    // }
-
-    // std::cout << "OrderBook asks: " << asks << " bids: " << bids << std::endl;
 }
 
-void CryptoExMain::enterAsk() { 
+/** Allows a user to enter an ask.
+ * User puts in the currency pair, the price and the amount
+*/
+void CryptoExMain::enterAsk() {
     std::cout << "Make an ask - empty the amount: product, price, amount, eg ETH/BTC,200,0.5" << std::endl;
     std::string input;
 
-    // std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
     std::getline(std::cin, input);
 
+    // tokenises user input
     std::vector<std::string> tokens = CSVReader::tokenise(input, ',');
     if (tokens.size() != 3)
     {
-        std::cout << "CryptoExMain::enterAsk() Bad input " << input << std::endl;
+        std::cout << "CryptoExMain::enterAsk Bad input " << input << std::endl;
     }
     else {
         try {
+            // create an order book entry
             OrderBookEntry obe = CSVReader::stringsToOBE(
             tokens[1], 
             tokens[2],
             currentTime,
             tokens[0],
-            OrderBookType::bid
+            OrderBookType::ask
             );
-            obe.username = "simuser";
+            obe.username = "simuser"; // just to differentiate from the rest of the dataset
+
+            // checks if ask can be fulfulled based on wallet contents, adds it to the order book if it can
             if (wallet.canFulfillOrder(obe))
             {
                 std::cout << "Wallet looks good" << std::endl;
@@ -105,82 +109,92 @@ void CryptoExMain::enterAsk() {
             }
         } catch(const std::exception& e) 
         {
-            std::cout << "CryptoExMain::enterBid Bad input: " << input << std::endl; 
+            std::cout << "CryptoExMain::enterAsk Bad input: " << input << std::endl; 
         }
 
     }
-
+    // lets a user know what they typed
     std::cout << "You typed " << input << std::endl;
 
 
     }
 
+/** Allows a user to enter an ask.
+ * User puts in the currency pair, the price and the amount
+*/
 void CryptoExMain::enterBid()
 {
-  std::cout << "Make a bid - enter the amount: product,price,amount, eg: ETH/BTC,200,0.5" << std::endl;
-  std::string input;
-  std::getline(std::cin, input);
+    std::cout << "Make a bid - enter the amount: product,price,amount, eg: ETH/BTC,200,0.5" << std::endl;
+    std::string input;
+    std::getline(std::cin, input);
 
-  std::vector<std::string> tokens = CSVReader::tokenise(input, ',');
-  if (tokens.size() != 3)
-  {
-    std::cout << "MerkelMain::enterBid Bad input! " << input << std::endl;
-  }
-  else
-  {
+    // tokenises user input
+    std::vector<std::string> tokens = CSVReader::tokenise(input, ',');
+    if (tokens.size() != 3)
+    {
+        std::cout << "CryptoExMain::enterBid Bad input! " << input << std::endl;
+    }
+    else {
     try
     {
-      OrderBookEntry obe = CSVReader::stringsToOBE(
-          tokens[1],
-          tokens[2],
-          currentTime,
-          tokens[0],
-          OrderBookType::bid
-          );
-          obe.username = "simuser";
+        // enters bid into order book
+        OrderBookEntry obe = CSVReader::stringsToOBE(
+            tokens[1],
+            tokens[2],
+            currentTime,
+            tokens[0],
+            OrderBookType::bid
+            );
+            obe.username = "simuser";
 
-      if (wallet.canFulfillOrder(obe))
-      {
-        std::cout << "Wallet looks good. " << std::endl;
-        orderBook.insertOrder(obe);
-      }
-      else
-      {
-        std::cout << "Wallet has insufficient funds. " << std::endl;
-      }
+        // checks if ask can be fulfulled based on wallet contents, adds it to the order book if it can
+        if (wallet.canFulfillOrder(obe))
+        {
+            std::cout << "Wallet looks good. " << std::endl;
+            orderBook.insertOrder(obe);
+        }
+        else
+        {
+            std::cout << "Wallet has insufficient funds. " << std::endl;
+        }
     }
     catch (const std::exception &e)
     {
-      std::cout << "MerkelMain::enterBid Bad input " << std::endl;
+        std::cout << "MerkelMain::enterBid Bad input " << std::endl;
     }
-  };
+    };
 }
 
+/** Prints the contents of a user's wallet*/
 void CryptoExMain::printWallet(){
     std::cout << wallet.toString() << std::endl;
     }
     
-
-
+/** Steps forward in time. */
 void CryptoExMain::gotoNextTimestamp(){
 
-  std::cout << "Going to next time frame" << std::endl;
-  std::vector<OrderBookEntry> sales = orderBook.matchAsksToBids("ETH/BTC", currentTime);
-  std::cout << "Sales: " << sales.size() << std::endl;
-  
-  for (OrderBookEntry &sale : sales)
-  {
-    std::cout << "Sale price: " << sale.price << " amount " << sale.amount << std::endl;
+    std::cout << "Going to next time frame" << std::endl;
+
+    // computes trades in the order book
+    std::vector<OrderBookEntry> sales = orderBook.matchAsksToBids("ETH/BTC", currentTime);
+    // prints the number of sales
+    std::cout << "Sales: " << sales.size() << std::endl;
+
+    // go through all the executed sales
+    for (OrderBookEntry &sale : sales)
+    {
+        std::cout << "Sale price: " << sale.price << " Amount " << sale.amount << std::endl;
     if (sale.username == "simuser")
     {
-      // update the wallet
-      wallet.processSale(sale);
+        // updates the wallet
+        wallet.processSale(sale);
     }
-  }
-  currentTime = orderBook.getNextTime(currentTime);
+    }
+    // moves time after computing sales
+    currentTime = orderBook.getNextTime(currentTime);
 }
 
-
+/** Takes in the user's option*/
 int CryptoExMain::getUserOption() {
     int userOption = 0;
     std::string line;
@@ -199,9 +213,10 @@ int CryptoExMain::getUserOption() {
     return userOption;
 }
 
-void CryptoExMain::processUserOption(int userOption) {
+/** Decides what to execute depending on the user's option*/
+bool CryptoExMain::processUserOption(int userOption) {
     if (userOption == 0) { // bad input
-        std::cout << "Bad Input: Type 1-6" << std::endl;
+        std::cout << "CryptoExMain::processUserOption Bad Input: Type 1-7" << std::endl;
         }
     if (userOption == 1) { 
         printHelp();
@@ -221,7 +236,8 @@ void CryptoExMain::processUserOption(int userOption) {
     if (userOption == 6) { 
         gotoNextTimestamp();
     }
-    // if (userOption == 7) { 
-    //     return false;
-    // }
+    if (userOption == 7) { 
+        return false;
+    }
+    return true;
 }

@@ -5,6 +5,10 @@
 #include "OrderBook.h"
 #include "Wallet.h"
 
+/**The entry point for the app.
+ * 
+ * This class defines the exchange object
+*/
 class CryptoExMain
 {
     public:
@@ -22,9 +26,10 @@ class CryptoExMain
         void printWallet();
         void gotoNextTimestamp();
         int getUserOption();
-        void processUserOption(int userOption);
+        bool processUserOption(int userOption);
 
             std::string currentTime;
+            // if we get more/different data, this will need to be updated
             OrderBook orderBook{"data.csv"};
             Wallet wallet;
 
